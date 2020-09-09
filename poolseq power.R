@@ -1,9 +1,10 @@
-setwd("/Users/jannawilloughby/GDrive/gray bats - alabama/poolseq_quant//")
+setwd("/Users/jannawilloughby/GDrive/gray bats - alabama/poolseq_quant/")
 library(scales)
 
-popsize = 2000 #total number of seqs in pool seq
-seqsize = 50   #total number of seqs with individual genotype data 
-nSNPs   = 100  #number of SNPs
+popsize = 2000   #total number of seqs in pool seq
+seqsize = 50     #total number of seqs with individual genotype data 
+pop.T   = 10000  #true population size
+nSNPs   = 100    #number of SNPs
 
 #initiate pop seq matrix
 pop = matrix(data=NA, nrow=popsize, ncol=(nSNPs+1))
@@ -15,25 +16,24 @@ ind[ ,1] = seq(1, seqsize, 1) #individual ids
 
 #function to create pools of genotypes in HWE
 geno.pool = function(popsize, seqsize){
-  totpopsize = popsize + seqsize
   p = sample(seq(from = 0, to = 1, by = 0.001), 1)
-  genos = c(rep(2, round((totpopsize*p*p), 0)),                                                #homozygous p*p
-            rep(1, round((totpopsize*(p)*(1-p)), 0)),                                          #homozygous 1-p^2
-            rep(0, totpopsize-(round((totpopsize*p*p), 0)+round((totpopsize*(1-p)*(1-p)), 0)))       #heterozygotes 2pq
-  )
+  q = 1 - p
+  lgpop = sample(c(2,1,0), pop.T, replace=T, prob=c((p*p), (2*p*q), (q*q)))
+  pop.genos = sample(lgpop, popsize, replace=F)
+  ind.genos = sample(lgpop, seqsize, replace=F)
+  
   #genos = sample(pool, popsize, replace=F)
-  return(list(genos, p))
+  return(list(pop.genos, ind.genos, p, q))
 }
 
-#pop[,2:(nSNPs+1)] = apply(pop[,2:(nSNPs+1)], 2, geno.pool, popsize=popsize)
-
-#get genotypes; since above won't work I'll loop it but I'm not happy about it
-pfreq = NULL
+#get genotypes; since apply won't work I'll loop it but I'm not happy about it
+pfreq = qfreq = NULL
 for(c in 2:(nSNPs+1)){
-  all.output = unlist(geno.pool(popsize, seqsize))
-  pop[,c] = all.output[1:popsize]
-  ind[,c] = all.output[(1+popsize):(1+popsize+seqsize)]
-  pfreq = c(pfreq, all.output[length(all.output)])
+  all.output = geno.pool(popsize, seqsize)
+  pop[,c] = unlist(all.output[[1]])
+  ind[,c] = unlist(all.output[[2]])
+  pfreq = c(pfreq, unlist(all.output[[3]]))
+  qfreq = c(qfreq, unlist(all.output[[4]]))
 }
 
 #estimate allele freqs for "pool seq" data
@@ -41,7 +41,10 @@ estimateAF = apply(pop[,2:ncol(pop)], 2, sum, na.rm=T)/(popsize*2)
 plot(pfreq, estimateAF, xlim=c(0,1), ylim=c(0,1))
 segments(0,0,1,1)
 
-  
+#
+
+
+
 
 
 #plot data nicely
