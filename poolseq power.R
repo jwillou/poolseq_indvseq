@@ -16,52 +16,26 @@ geno.pool = function(popsize){
            rep(2, popsize-(round((popsize*p*p), 0)+round((popsize*(1-p)*(1-p)), 0)))       #heterozygotes 2pq
   )
   genos = sample(pool, popsize, replace=T)
-  return(genos)
+  return(list(genos, p))
 }
 
 #pop[,2:(nSNPs+1)] = apply(pop[,2:(nSNPs+1)], 2, geno.pool, popsize=popsize)
 
 #get genotypes; since above won't work I'll loop it but I'm not happy about it
+pfreq = NULL
 for(c in 2:(nSNPs+1)){
-  pop[,c] =geno.pool(popsize)
+  all.output = unlist(geno.pool(popsize))
+  pop[,c] = all.output[1:nrow(pop)]
+  pfreq = c(pfreq, all.output[length(all.output)])
 }
 
-
-
-rep(geno.pool, popsize)
-
-pop = apply(pop, 1, geno.pool, popsize=popsize)
-
-pop = lapply(pop, geno.pool, popsize=popsize)
-
-
-
-
-
-
-
-for(n in 1:nSNPs){
-  
-  
- 
-
-  gtype = sample(pool, popsize, replace=FALSE)
-  for(i in 1:popsize){
-    if(gtype[i]==0){                            #homozygous (0,0)
-      genos[i,1]   = 0
-      genos[i,2] = 0
-      next
-    }else if(gtype[i]==1){                      #heterozygous (0,1)
-      genos[i,1]   = 0
-      genos[i,2] = 1
-    }else{                                      #homozygous (1,1)
-      genos[i,1]   = 1
-      genos[i,2] = 1
-    }
-  }
-  pop[,(n+1)]  = apply(genos, 1, sum)
-  pool = genos = NULL
-}  
+#estimate allele freqs for "pool seq" data
+t = pop[,2:ncol(pop)]
+t[t==2] = NA
+t[t==1] = 0.5
+t[t==0] = 1
+apply(t, 2, sum, na.rm=T)/100
+estimateAF = 
 
 
 
