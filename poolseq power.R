@@ -1,21 +1,27 @@
 setwd("/Users/jannawilloughby/GDrive/gray bats - alabama/poolseq_quant//")
 library(scales)
 
-popsize = 200
-nSNPs   = 100
+popsize = 2000 #total number of seqs in pool seq
+seqsize = 50   #total number of seqs with individual genotype data 
+nSNPs   = 100  #number of SNPs
 
-#initiate population
+#initiate pop seq matrix
 pop = matrix(data=NA, nrow=popsize, ncol=(nSNPs+1))
 pop[ ,1] = seq(1, popsize, 1) #individual ids
 
+#initiate indv seq matrix
+ind = matrix(data=NA, nrow=seqsize, ncol=(nSNPs+1))
+ind[ ,1] = seq(1, seqsize, 1) #individual ids
+
 #function to create pools of genotypes in HWE
-geno.pool = function(popsize){
-  p = sample(seq(from = 0, to = 1, by = 0.01), 1)
-  pool = c(rep(0, round((popsize*p*p), 0)),                                                #homozygous p*p
-           rep(1, round((popsize*(1-p)*(1-p)), 0)),                                        #homozygous 1-p^2
-           rep(2, popsize-(round((popsize*p*p), 0)+round((popsize*(1-p)*(1-p)), 0)))       #heterozygotes 2pq
+geno.pool = function(popsize, seqsize){
+  totpopsize = popsize + seqsize
+  p = sample(seq(from = 0, to = 1, by = 0.001), 1)
+  genos = c(rep(2, round((totpopsize*p*p), 0)),                                                #homozygous p*p
+            rep(1, round((totpopsize*(p)*(1-p)), 0)),                                          #homozygous 1-p^2
+            rep(0, totpopsize-(round((totpopsize*p*p), 0)+round((totpopsize*(1-p)*(1-p)), 0)))       #heterozygotes 2pq
   )
-  genos = sample(pool, popsize, replace=T)
+  #genos = sample(pool, popsize, replace=F)
   return(list(genos, p))
 }
 
@@ -24,82 +30,18 @@ geno.pool = function(popsize){
 #get genotypes; since above won't work I'll loop it but I'm not happy about it
 pfreq = NULL
 for(c in 2:(nSNPs+1)){
-  all.output = unlist(geno.pool(popsize))
-  pop[,c] = all.output[1:nrow(pop)]
+  all.output = unlist(geno.pool(popsize, seqsize))
+  pop[,c] = all.output[1:popsize]
+  ind[,c] = all.output[(1+popsize):(1+popsize+seqsize)]
   pfreq = c(pfreq, all.output[length(all.output)])
 }
 
 #estimate allele freqs for "pool seq" data
-t = pop[,2:ncol(pop)]
-t[t==2] = NA
-t[t==1] = 0.5
-t[t==0] = 1
-apply(t, 2, sum, na.rm=T)/100
-estimateAF = 
-
-
+estimateAF = apply(pop[,2:ncol(pop)], 2, sum, na.rm=T)/(popsize*2)
+plot(pfreq, estimateAF, xlim=c(0,1), ylim=c(0,1))
+segments(0,0,1,1)
 
   
-#allele 1 positions
-positions = seq(1, (nSNPs*2), 2)
-  
-  # randomly sample either position 1 or 2 (add 0 or 1) to starting position
-  fallele  <- positions + sample(0:1, nloci * noff, replace = TRUE)
-  fallele2 <- fg[fallele]
-  fallele3 <- matrix(fallele2, nrow = noff, ncol = nloci, byrow = TRUE)
-  
-  mallele  <- positions + sample(0:1, nloci * noff, replace = TRUE)
-  mallele2 <- mg[mallele]
-  mallele3 <- matrix(mallele2, nrow = noff, ncol = nloci, byrow = TRUE)
-  
-  offspringG[, positions]     <- fallele3
-  offspringG[, positions + 1] <- mallele3
-  
-  offspring    = cbind(offspring, offspringG)
-  gstartID     = gstartID + nrow(offspring)
-  
-  
-  
-}
-
-
-
-
-#output dataframe
-OUT = NULL
-
-#iterate over number of collected samples (marks and recaptures)
-for(c in 1:length(collects)){
-  collect = collects[c]
-  recollect = recollects[c]
-  Nst = NULL
-  #repeat each marking effort 100 times
-  for(i in 1:1000){
-    #create initial population
-    pop1 = data.frame(uid = seq(1, popsize, 1), capture = rep(0, popsize), recapture = rep(0, popsize))
-    #initial marking
-    pop1$capture[(sample(x=c(1:popsize), size=collect, replace=F))] = 1
-    #recapture
-    pop1$recapture[(sample(x=c(1:popsize), size=recollect, replace=F))] = 1
-    #estimate pop1 size and add to list
-    Nst = c(Nst, ((sum(pop1$capture)+1)*(collect+1))/((sum(pop1$recapture[pop1$capture==1])+1)))
-  }
-  #record mean/sd for pop1 size estimates
-  writeout = c(collect, recollect, mean(Nst), sd(Nst), quantile(Nst, probs=0.975), quantile(Nst, probs=0.025))
-  #add these values to others
-  OUT = rbind(OUT, writeout)
-}
-colnames(OUT) = c("collect", "recollect", "NstM", "NstSD", "NstUL", "NstLL")
-rownames(OUT) = seq(1,nrow(OUT), 1)
-o = as.data.frame(OUT)
-o$NstSE = 1.96*o$NstSD/sqrt(i)
-o$totalgenos = o$collect + o$recollect
-
-
-
-
-
-
 
 
 #plot data nicely
