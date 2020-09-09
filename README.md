@@ -1,1 +1,1 @@
-# poolseq_indvseq
+# poolseq_quant
