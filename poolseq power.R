@@ -1,4 +1,4 @@
-setwd("/Users/jannawilloughby/GDrive/gray bats - alabama/poolseq_indvseq/")
+setwd("/Users/jannawilloughby/GDrive/gray bats - alabama/poolseq_quant//")
 library(scales)
 
 popsize = 200
@@ -19,11 +19,20 @@ geno.pool = function(popsize){
   return(genos)
 }
 
-pop[,2:(nSNPs+1)] = apply(pop[,2:(nSNPs+1)], 2, geno.pool, popsize=popsize)
+#pop[,2:(nSNPs+1)] = apply(pop[,2:(nSNPs+1)], 2, geno.pool, popsize=popsize)
+
+#get genotypes; since above won't work I'll loop it but I'm not happy about it
+for(c in 2:(nSNPs+1)){
+  pop[,c] =geno.pool(popsize)
+}
 
 
 
+rep(geno.pool, popsize)
 
+pop = apply(pop, 1, geno.pool, popsize=popsize)
+
+pop = lapply(pop, geno.pool, popsize=popsize)
 
 
 
