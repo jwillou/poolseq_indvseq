@@ -97,11 +97,22 @@ sims = as.data.frame(OUT)
 #rare genotypes
 for(pops in pop.Ts){
   hist(sims$raregeno_mean[sims$truepopsize==as.character(pops)], main=paste(pops, mean(sims$raregeno_mean[sims$truepopsize==as.character(pops)]), sep=" "), xlim=c(0.025, 0.05))
-  
 }
 
 #rare genotypes
-for(pop in pop.Ts){
-  hist(sims$findgeno_mean[sims$truepopsize==as.character(pop)])
-  mean(sims$findgeno_mean[sims$truepopsize==as.character(pop)])
+for(pops in pop.Ts){
+  hist(sims$findgeno_mean[sims$truepopsize==as.character(pops)], main=paste(pops, mean(sims$findgeno_mean[sims$truepopsize==as.character(pops)]), sep=" "), xlim=c(0.0025, 0.005))
 }
+
+#exploratory plots
+plot(sims$truepopsize, sims$raregeno_mean)
+plot(sims$truepopsize, sims$raregeno_sd)
+plot(sims$truepopsize, sims$rarealleles_mean)
+plot(sims$truepopsize, sims$rarealleles_sd)
+plot(sims$truepopsize, sims$findgeno_mean)
+plot(sims$truepopsize, sims$findgeno_sd)
+plot(sims$truepopsize, sims$findalleles_mean)
+plot(sims$truepopsize, sims$findalleles_sd)
+
+
+
